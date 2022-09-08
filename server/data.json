@@ -1,0 +1,20 @@
+[
+    {
+        "firstname": "thiru",
+        "lastname": "teja",
+        "password": "T123@",
+        "password2": "T123@",
+        "phone": "+917981097417",
+        "address": "hyd",
+        "email": "abc@gmail.com"
+    },
+    {
+        "firstname": "thiru",
+        "lastname": "teja",
+        "password": "T123@",
+        "password2": "T123@",
+        "phone": "+917981097417",
+        "address": "hyd",
+        "email": "abc@gmail.com"
+    }
+]
