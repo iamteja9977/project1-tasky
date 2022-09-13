@@ -1,20 +1,32 @@
 [
-    {
-        "firstname": "thiru",
-        "lastname": "teja",
-        "password": "T123@",
-        "password2": "T123@",
-        "phone": "+917981097417",
-        "address": "hyd",
-        "email": "abc@gmail.com"
-    },
-    {
-        "firstname": "thiru",
-        "lastname": "teja",
-        "password": "T123@",
-        "password2": "T123@",
-        "phone": "+917981097417",
-        "address": "hyd",
-        "email": "abc@gmail.com"
-    }
+  {
+    "user_id": "zGMHKwCQoFsf5FFU",
+    "firstname": "teja",
+    "lastname": "thiru",
+    "password": "$2b$12$mAgjhKUweVYVTtKR9KxOm.I3pRaaysD3yp3gxoUKjo8HDK3TNVISS",
+    "address": "delhi",
+    "phone": "+917207232098",
+    "email": "xyz@gmail.com",
+    "tasks": []
+  },
+  {
+    "user_id": "3P4RPxGSR1qkRjZ2",
+    "firstname": "teja",
+    "lastname": "thiru",
+    "password": "$2b$12$fUot55OSs/dr9HttScAiiOYH/drj.nNLoLB9SH8V7ig10nqB7cLq6",
+    "address": "delhi",
+    "phone": "+917207232098",
+    "email": "xyz@gmail.com",
+    "tasks": []
+  },
+  {
+    "user_id": "eqi0ZRhOPW9gWMRM",
+    "firstname": "teja",
+    "lastname": "thiru",
+    "password": "$2b$12$rfNUet0/rzH4BgCDg9Jq8.ZrgULxnn2KsN1dOcz/UcK8pCy1SAYti",
+    "address": "delhi",
+    "phone": "+9172075888",
+    "email": "thiru@gmail.com",
+    "tasks": []
+  }
 ]
