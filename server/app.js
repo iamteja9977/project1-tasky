@@ -2,9 +2,10 @@ import express from "express";
 import fs from "fs/promises";
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken";
+import { scheduleJob, scheduledJobs, cancelJob } from "node-schedule";
 
 
-import randomString from "./utils/randomstring.js";
+import randomString from "./utils/randomString.js";
 
 const app = express();
 
@@ -198,7 +199,7 @@ app.post("/api/task", async (req, res) => {
         // console.log(days);
 
         //Not Less than 30 mins and Not more than 30 Days
-        if (mins < 30 || days > 30) {
+        if (mins < 1 || days > 30) {
             return res.status(400).json({ error: "Invalid Date Entered, Deadline Should be More than 30 mins and Less than 30 Days" });
         }
 
@@ -215,7 +216,90 @@ app.post("/api/task", async (req, res) => {
         // console.log(reminder3);
 
         reminders.push(reminder1, reminder2, reminder3, utc_deadline);
-        // console.log(reminders);
+        console.log(reminders);
+
+
+        //Reading File Data
+        let fileData = await fs.readFile("data.json");
+        fileData = JSON.parse(fileData);
+
+        let userFound = fileData.find((ele) => ele.user_id == payload.user_id)
+        // console.log(userFound);
+        let task_id = randomString(14)
+        let task_data = {
+            task_id,
+            task_name,
+            deadline: utc_deadline,
+            isCompleted: false,
+            reminders
+        }
+
+
+        task_data.reminders.forEach((ele, i) => {
+            // console.log(ele);
+            scheduleJob(`${task_id}_${i}`, ele, () => {
+                console.log("Reminder Sent", i);
+                console.log(new Date());
+            })
+            // console.log(i);
+        })
+        console.log(scheduledJobs);
+
+        // console.log(task_data);
+        userFound.tasks.push(task_data);
+
+        // console.log(userFound);
+        // console.log(fileData);
+
+
+        await fs.writeFile("data.json", JSON.stringify(fileData));
+        res.status(200).json({ success: "Task was Added" })
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ error: "Internal Server Error" })
+    }
+})
+
+/* 
+End Point : /api/tasks
+Method : GET
+PRIVATE
+*/
+
+
+
+/* 
+End Point : /api/task/:task_id
+Method : GET
+PRIVATE
+*/
+
+
+
+/* 
+End Point : /api/task/:task_id
+Method : DELETE
+PRIVATE
+Use : To Delete the Task from a Given ID
+*/
+
+
+app.delete("/api/task/:task_id", async (req, res) => {
+    try {
+        // console.log(req.params);
+        let task_id = req.params.task_id;
+        console.log(task_id);
+
+        //Check for Authorisation
+        let token = req.headers["auth-token"];
+        if (!token) {
+            return res.status(401).json({ error: "Unauthorised Access" });
+        }
+        const payload = jwt.verify(token, "codeforindia");
+        // console.log(payload);
+        if (!payload) {
+            return res.status(401).json({ error: "Unauthorised Access" });
+        }
 
 
         //Reading File Data
@@ -225,26 +309,49 @@ app.post("/api/task", async (req, res) => {
         let userFound = fileData.find((ele) => ele.user_id == payload.user_id)
         // console.log(userFound);
 
-        let task_data = {
-            task_id: randomString(14),
-            task_name,
-            deadline: utc_deadline,
-            isCompleted: false,
-            reminders
+        //Find Index of Given Task
+
+        let taskIndex = userFound.tasks.findIndex((ele) => ele.task_id == task_id);
+        // console.log(taskIndex);
+
+        if (taskIndex == -1) {
+            return res.status(404).json({ error: "Task Not Found" });
         }
 
-        // console.log(task_data);
-        userFound.tasks.push(task_data);
-
-        // console.log(userFound);
+        //Delete Element with Given Index from an Array
+        userFound.tasks.splice(taskIndex, 1)
+        // console.log(userFound.tasks);
         // console.log(fileData);
         await fs.writeFile("data.json", JSON.stringify(fileData));
-        res.status(200).json({ success: "Task was Added" })
+        res.status(200).json({ success: "Task Was Deleted Successfully" });
     } catch (error) {
-        console.log(error);
-        res.status(500).json({ error: "Internal Server Error" })
+        console.error(error);
+        return res.status(500).json({ error: "Internal Server Error" });
     }
 })
+
+// app.get("/check", (req, res) => {
+//     try {
+//         let date = new Date("Thu Sep 15 2022 18:16:50 GMT+0530 (India Standard Time)")
+//         console.log(new Date());
+
+//         console.log(date);
+
+//         scheduleJob("jobid_1", date, () => {
+//             console.log(randomString(100))
+//         });
+//         console.log(scheduledJobs);
+//         cancelJob("jobid_1");
+//         console.log(scheduledJobs);
+//         res.status(200).json({ success: "Checking " });
+
+//     } catch (error) {
+//         console.error(error)
+//         res.status(500).json({ error: "Internal Server Error " });
+//     }
+// })
+
+
 
 
 app.listen(port, () => {
