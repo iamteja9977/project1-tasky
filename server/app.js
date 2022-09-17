@@ -6,8 +6,8 @@ import { scheduleJob, scheduledJobs, cancelJob } from "node-schedule";
 
 
 import randomString from "./utils/randomString.js";
-import sendEmail from "./utils/sendMail.js";
-import sendSMS from "./utils/sendSMS.js";
+// import sendEmail from "./utils/sendMail.js";
+// import sendSMS from "./utils/sendSMS.js";
 
 //instantiate express
 const app = express();
@@ -341,7 +341,7 @@ PRIVATE
 app.get('/api/task/:task_id',async(req,res)=>{
 	try {
         let task_id = req.params.task_id;
-        console.log(task_id);
+        // console.log(task_id);
 
 		let token= req.headers["auth-token"];
 		if(!token){
@@ -362,13 +362,64 @@ app.get('/api/task/:task_id',async(req,res)=>{
 		let userFound= fileData.find((ele)=> ele.user_id == payload.user_id);
 		// console.log(userFound);
 
-		res.status(200).json({ data: userFound.task_name})
+        let tasks_of_task_ID = userFound.tasks.find((ele) => ele.task_id == task_id);
+// console.log(tasks_of_task_ID)
+		res.status(200).json({ data: tasks_of_task_ID})
 	} catch (error) {
 		console.log(error);
 		res.status(500).json({error:"Internal Server Error"});
 	}
 })
+//------------------------------------------------------------------
+/*METHOD PUT
+Use : Edit the Given Task Status and Reschedule the Reminders
+Access : Private
+Endpoint : /api/task/:task_id
+Response : Reminder has been Edited*/
 
+app.put('/api/task/:task_id',async(req,res)=>{
+	try {
+//destructuring from the body
+let { task_name, deadline,isCompleted} = req.body;
+//if fields are empty
+if (!task_name || !deadline || !isCompleted) {
+    return res.status(400).json({ "error": "Some Fields Are Missing " });
+}
+
+//Reading File Data
+let fileData = await fs.readFile('data.json');
+fileData = JSON.parse(fileData);
+        let task_id = req.params.task_id;
+        // console.log(task_id);
+
+		let token= req.headers["auth-token"];
+		if(!token){
+			return res.status(401).json({error: "Unauthorised Access1"});
+		}
+		let privateKey="codeforindia";
+		const payload = jwt.verify(token, privateKey);
+		// console.log(payload);
+
+		if(!payload){
+			return res.status(401).json({error : "Unauthorised Access2"});
+		}
+
+
+		let userFound= fileData.find((ele)=> ele.user_id == payload.user_id);
+		// console.log(userFound);
+
+        let tasks_Data= userFound.tasks.find((ele) => ele.task_id == task_id);
+        // console.log(tasks_of_task_ID)
+        tasks_Data.task_name=task_name;
+        tasks_Data.deadline=deadline;
+        tasks_Data.isCompleted=isCompleted;
+        await fs.writeFile("data.json", JSON.stringify(fileData));
+		res.status(200).json({"success": "Reminder has been Edited"})
+	} catch (error) {
+		console.log(error);
+		res.status(500).json({error:"Internal Server Error"});
+	}
+})
 //-----------------------------------------------------------------------------
 /* 
 End Point : /api/task/:task_id
@@ -418,7 +469,7 @@ app.delete("/api/task/:task_id", async (req, res) => {
         // console.log(userFound.tasks);
         // console.log(fileData);
         await fs.writeFile("data.json", JSON.stringify(fileData));
-        res.status(200).json({ success: "Task Was Deleted Successfully" });
+        res.status(200).json({ success: "Task  Deleted and Reminders have been cancelled Successfully" });
     } catch (error) {
         console.error(error);
         return res.status(500).json({ error: "Internal Server Error" });
