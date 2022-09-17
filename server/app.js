@@ -6,6 +6,9 @@ import { scheduleJob, scheduledJobs, cancelJob } from "node-schedule";
 
 
 import randomString from "./utils/randomString.js";
+import sendEmail from "./utils/sendMail.js";
+import sendSMS from "./utils/sendSMS.js";
+
 //instantiate express
 const app = express();
 
@@ -15,11 +18,11 @@ const port = 5000;
 //JSON Body Parser
 //allowing only json
 app.use(express.json())
-//-------------------------------------------------------------------------------------------------------
+
 app.get("/", (req, res) => {
     res.status(200).json({ success: "Welcome To the Tasky Application" })
 })
-
+//-------------------------------------------------------------------------------------------------------
 /*
 METHOD : POST
 API Endpoint : /api/signup
@@ -76,11 +79,34 @@ let user_id = randomString(16);
 
 //adding tasks to our userData object 
         userData.tasks = []
+    
+        /*********************************************** */
+//16/09/22
+userData.tasks = []
+userData.isVerified = {
+    phone: false,
+    email: false
+}
+let phoneToken = randomString(20);
+let emailToken = randomString(20);
+userData.verifyToken = {
+    phoneToken,
+    emailToken
+}
+        /*************************************************** */
 //pushing our userData object to  empty fileData        
         fileData.push(userData);
+
+
 //writing the fileData object to DB
         await fs.writeFile("data.json", JSON.stringify(fileData));
         res.status(200).json({ success: "User Signed Up Succesfully" });
+    
+        await sendSMS({
+            body: `Thank you for Signing Up. Please click on the given link to verify your phone. http://192.168.68.133:5000/api/verify/mobile/${phoneToken}`,
+            to: phone
+        })
+
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Internal Server Error" })
@@ -312,7 +338,36 @@ End Point : /api/task/:task_id
 Method : GET
 PRIVATE
 */
+app.get('/api/task/:task_id',async(req,res)=>{
+	try {
+        let task_id = req.params.task_id;
+        console.log(task_id);
 
+		let token= req.headers["auth-token"];
+		if(!token){
+			return res.status(401).json({error: "Unauthorised Access1"});
+		}
+		let privateKey="codeforindia";
+		const payload = jwt.verify(token, privateKey);
+		// console.log(payload);
+
+		if(!payload){
+			return res.status(401).json({error : "Unauthorised Access2"});
+		}
+
+		//Reading File Data
+		let fileData = await fs.readFile('data.json');
+		fileData = JSON.parse(fileData);
+
+		let userFound= fileData.find((ele)=> ele.user_id == payload.user_id);
+		// console.log(userFound);
+
+		res.status(200).json({ data: userFound.task_name})
+	} catch (error) {
+		console.log(error);
+		res.status(500).json({error:"Internal Server Error"});
+	}
+})
 
 //-----------------------------------------------------------------------------
 /* 
