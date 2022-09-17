@@ -385,7 +385,37 @@ let { task_name, deadline,isCompleted} = req.body;
 if (!task_name || !deadline || !isCompleted) {
     return res.status(400).json({ "error": "Some Fields Are Missing " });
 }
+     /*************************************************************/
+//updating remainders array
+     //converting the GMT to UTC
+     let utc_deadline = new Date(deadline);
+     // console.log(utc_deadline);
+     let present_time = new Date();//UTC time format
+     // console.log(present_time);
 
+//if date is in correct format AND date entered is already been passed
+     if (utc_deadline == "Invalid Date" || (utc_deadline < present_time)) {
+         return res.status(400).json({ error: "Invalid Date Entered" });
+     }
+
+     let difference = utc_deadline - present_time; //milli seconds
+//creating  Reminders array
+     let reminders = [];
+
+     let reminder1 = new Date((+present_time) + (difference / 4));
+     // console.log(reminder1);
+
+     let reminder2 = new Date((+present_time) + (difference / 2));
+     // console.log(reminder2);
+
+     let reminder3 = new Date((+present_time) + (difference / (4 / 3)));
+     // console.log(reminder3);
+
+//3 remainders and deadline is pushing into the remainders array
+     reminders.push(reminder1, reminder2, reminder3, utc_deadline);
+     // console.log(reminders);
+
+     /****************************************************************/
 //Reading File Data
 let fileData = await fs.readFile('data.json');
 fileData = JSON.parse(fileData);
@@ -409,10 +439,22 @@ fileData = JSON.parse(fileData);
 		// console.log(userFound);
 
         let tasks_Data= userFound.tasks.find((ele) => ele.task_id == task_id);
-        // console.log(tasks_of_task_ID)
+        
         tasks_Data.task_name=task_name;
         tasks_Data.deadline=deadline;
         tasks_Data.isCompleted=isCompleted;
+        tasks_Data.reminders=reminders;
+        /**************************************************************************/
+       //cancelling
+        tasks_Data.reminders.forEach((ele,i)=>{
+
+            cancelJob(`${task_id}_${i}`)
+        })
+        console.log(scheduledJobs);
+        /*************************************************************************/
+
+
+
         await fs.writeFile("data.json", JSON.stringify(fileData));
 		res.status(200).json({"success": "Reminder has been Edited"})
 	} catch (error) {
