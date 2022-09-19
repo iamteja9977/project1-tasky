@@ -5,8 +5,9 @@ import jwt from "jsonwebtoken";
 import { scheduleJob, scheduledJobs, cancelJob } from "node-schedule";
 
 import randomString from "./utils/randomString.js";
-// import sendEmail from "./utils/sendMail.js";
+import sendEmail from "./utils/sendMail.js";
 import sendSMS from "./utils/sendSMS.js";
+// import sendEmail from "./utils/sendMail.js";
 
 //instantiate express
 const app = express();
@@ -123,6 +124,11 @@ app.post("/api/signup", async (req, res) => {
       body: `Thank you for Signing Up. Please click on the given link to verify your phone. http://192.168.68.133:5000/api/verify/mobile/${phoneToken}`,
       to: phone,
     });
+    sendEmail({
+        subject: "i'm working on email router",
+        to:email,
+        html:"this is HTML "
+    })
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -160,6 +166,38 @@ app.get("/api/verify/mobile/:phonetoken", async (req, res) => {
 });
 
 //----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------
+/*
+METHOD : GET
+PUBLIC
+API Endpoint : /api/verify/mail/:mailtoken
+*/
+
+app.get("/api/verify/mail/:mailtoken", async (req, res) => {
+    try {
+      let mailToken = req.params.mailtoken;
+      console.log(mailToken);
+  
+      let fileData = await fs.readFile("data.json");
+      fileData = JSON.parse(fileData);
+  
+      let userFound = fileData.find(
+        (ele) => ele.verifyToken.emailToken == mailToken
+      );
+      console.log(userFound);
+      if (userFound.isVerified.email== true) {
+        return res.status(200).json({ success: "email already Verified" });
+      }
+      userFound.isVerified.mail = true;
+      await fs.writeFile("data.json", JSON.stringify(fileData));
+      res.status(200).json({ success: "mail is Verified" });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+  
+  //----------------------------------------------------------------------------------------------
 /*
 METHOD : POST
 PUBLIC
